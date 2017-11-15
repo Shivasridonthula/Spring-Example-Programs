@@ -1,0 +1,322 @@
+Resource Interface
+------------------
+
+Contents of this interface are as shown below:
+
+public interface Resource extends InputStreamSource {
+
+    boolean exists();
+
+    boolean isOpen();
+
+    URL getURL() throws IOException;
+
+    File getFile() throws IOException;
+
+    Resource createRelative(String relativePath) throws IOException;
+
+    String getFilename();
+
+    String getDescription();
+}
+
+Contents of InputStreamSource are as below:
+--------------------------------------------
+
+public interface InputStreamSource {
+
+    InputStream getInputStream() throws IOException;
+}
+Resource is a general interface in Spring for representing an external resource.
+
+Spring Built-in implementations for Resource interface
+
+Spring provides several built-in implementations for the Resource interface as listed below:
+------------------------------------------------------------------------------------------------
+1.UrlResource: Represents a URL.
+2.ClassPathResource: Represents a File loaded from the classpath.
+3.FileSystemResource: Represents a File.
+4.ServletContextResource: This implementation is for ServletContext resources, interpreting relative paths within the relevant
+web application’s root directory.
+5.InputStreamResource: Represents an input stream.
+6.ByteArrayResource: TRepresents a byte array.
+
+
+Resource API Example
+---------------------
+
+The example below demonstrates the use of Resource interface. Let us have working Eclipse 
+IDE in place and follow the following steps to create a Spring application:
+
+Create a project: Create a project with a name SpringExternalResourceExample and create a package com.javabeat under the src directory
+in the created project.
+Add Libraries: Add required Spring libraries using Add External JARs option as explained in the article Customizing callback methods.
+Create source files: Create Java classe MainApp under the com.javabeat package.
+Create configuration file: Create XML based configuration file Beans.xml under src directory.
+Contents of MainApp.java are as below:
+
+package com.javabeat;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.core.io.Resource;
+
+public class MainApp {
+	public static void main(String[] args) throws Exception {
+		ApplicationContext ctx = new ClassPathXmlApplicationContext("Beans.xml");
+
+		Resource resource = ctx.getResource("file:c:\\SampleResourceFile.txt");
+		try {
+			InputStream is = resource.getInputStream();
+			BufferedReader br = new BufferedReader(new InputStreamReader(is));
+
+			String line;
+			while ((line = br.readLine()) != null) {
+				System.out.println(line);
+			}
+			br.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+}
+Note that we have used the getResource() to load a text file from File system. Suppose say you have the text file 
+from URL path then the code would be as below:
+
+Resource resource =  ctx.getResource("url:http://www.exampledomain.com/SampleResourceFile.txt");
+If you want to load the the text file from the classpath then the line of code would be as below:
+
+Resource resource = ctx.getResource("classpath:com/javabeat/SampleResourceFile.txt");
+
+The contents of the Beans.xml are as below:
+-------------------------------------------------
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation=" http://www.springframework.org/schema/beans
+ http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+</beans>
+The SampleResourceFile.txt contains the following text:
+
+**********************************
+HI I'M AN EXTERNAL RESOURCE FILE
+**********************************
+This is a standalone application and does not need the Spring container. Now execute the above code then the output would be as below:
+
+**********************************
+HI I'M AN EXTERNAL RESOURCE FILE
+**********************************
+
+
+Injecting Resources
+-----------------------
+
+
+
+Now let’s say you want to have a reference of the resource which you may use in your application; this can be achieved in two ways:
+
+Resource Injection: By using setter method.
+Using ResourceLoader: Here we use ResourceLoader interface to help us get an instance of the resource we require. Such technique is used for loading dynamic resources i.e which will be loaded based on some business logic.
+
+
+Example for Resource Injection
+--------------------------------
+
+Setup the project as in the example above:
+Contents of ProjectService.java are:
+
+package com.javabeat;
+
+import org.springframework.core.io.Resource;
+
+public class ProductService {
+
+	private Resource externalResource;
+
+	public Resource getExternalResource() {
+		return externalResource;
+	}
+
+	public void setExternalResource(Resource externalResource) {
+		this.externalResource = externalResource;
+	}
+}
+In the above class, I’ve created a property of type Resource.
+
+Contents of MainApp.java are:
+-----------------------------
+
+package com.javabeat;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.core.io.Resource;
+
+public class MainApp {
+	public static void main(String[] args) throws Exception {
+		ApplicationContext ctx = new ClassPathXmlApplicationContext("Beans.xml");
+		ProductService productService = (ProductService) ctx
+				.getBean("productService");
+
+		try {
+			Resource resource = productService.getExternalResource();
+			InputStream is = resource.getInputStream();
+			BufferedReader br = new BufferedReader(new InputStreamReader(is));
+
+			String line;
+			while ((line = br.readLine()) != null) {
+				System.out.println(line);
+			}
+			br.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+}
+In the above test class, we get the bean in the usual way and when you get the externalResource property from this 
+bean, you can successfully read the information from this resource object.
+
+Contents of Beans.xml are:
+----------------------------
+
+   <?xml version="1.0" encoding="UTF-8"?>
+       <beans xmlns="http://www.springframework.org/schema/beans"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:aop="http://www.springframework.org/schema/aop"
+            xmlns:tx="http://www.springframework.org/schema/tx"
+            xmlns:context="http://www.springframework.org/schema/context"
+            xsi:schemaLocation="
+                 http://www.springframework.org/schema/beans
+                 http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+                 http://www.springframework.org/schema/tx
+                 http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+                 http://www.springframework.org/schema/aop
+                 http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+                 http://www.springframework.org/schema/context
+                 http://www.springframework.org/schema/context/spring-context-2.5.xsd">
+
+         <bean id="productService" class="com.javabeat.ProductService" >
+         <property name="externalResource" value="file:c:\\SampleResourceFile.txt"></property>
+         </bean>
+
+    </beans>
+In the above Beans.xml file I’ve have injected the property with the path of the file we want spring to provide us with.
+Executing the above code gives the below output :
+
+**********************************
+HI I'M AN EXTERNAL RESOURCE FILE
+**********************************
+
+
+Example for ResourceLoader
+---------------------------
+
+Setup the project as in the example above:
+Contents of ProjectService.java are:
+-----------------------------------------
+
+package com.javabeat;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+
+public class ProductService {
+
+	@Autowired
+	private ResourceLoader resourceLoader;
+
+	public Resource getResource(String location) {
+		return resourceLoader.getResource(location);
+	}
+}
+The above class has a property type ResourceLoader. ResourceLoader is used to dynamically load the resource. 
+To tell the spring about injecting value into this, we have used the @Autowired annotation. With annotations, 
+we need not create setter methods for our properties. Only thing we have to do is to tell Spring framework that 
+we are using the annotation, so in addition to the injecting values based on the property tags from the xml, 
+it has to read class level annotations also. We do this by adding in the Beans.xml file.
+
+Contents of MainApp.java are:
+------------------------------
+
+package com.javabeat;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.core.io.Resource;
+
+public class MainApp {
+	public static void main(String[] args) throws Exception {
+		ApplicationContext ctx = new ClassPathXmlApplicationContext("Beans.xml");
+		ProductService productService = (ProductService) ctx
+				.getBean("productService");
+
+		Resource resource = productService
+				.getResource("file:c:\\SampleResourceFile.txt");
+		try {
+			InputStream is = resource.getInputStream();
+			BufferedReader br = new BufferedReader(new InputStreamReader(is));
+
+			String line;
+			while ((line = br.readLine()) != null) {
+				System.out.println(line);
+			}
+			br.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+}
+Contents of Beans.xml are:
+------------------------------
+
+    <beans xmlns="http://www.springframework.org/schema/beans"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:aop="http://www.springframework.org/schema/aop"
+         xmlns:tx="http://www.springframework.org/schema/tx"
+         xmlns:context="http://www.springframework.org/schema/context"
+         xsi:schemaLocation="
+              http://www.springframework.org/schema/beans
+              http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+              http://www.springframework.org/schema/tx
+              http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+              http://www.springframework.org/schema/aop
+              http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+              http://www.springframework.org/schema/context
+              http://www.springframework.org/schema/context/spring-context-2.5.xsd">
+              <context:annotation-config />
+      <bean id="productService" class="com.javabeat.ProductService" />
+
+    </beans>
+Executing the above code gives the below output :
+
+**********************************
+HI I'M AN EXTERNAL RESOURCE FILE
+**********************************
+
+
