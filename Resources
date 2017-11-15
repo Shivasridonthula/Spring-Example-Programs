@@ -319,4 +319,118 @@ Executing the above code gives the below output :
 HI I'M AN EXTERNAL RESOURCE FILE
 **********************************
 
+ResourceLoaderAware
+------------------------
+
+The ResourceLoaderAware interface is a special marker interface, 
+identifying objects that expect to be provided with a ResourceLoader reference.
+
+Contents of ProductService.java are:
+
+package com.javabeat;
+
+import org.springframework.context.ResourceLoaderAware;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+
+public class ProductService implements ResourceLoaderAware {
+
+	private ResourceLoader resourceLoader;
+
+	public void setResourceLoader(ResourceLoader resourceLoader) {
+		this.resourceLoader = resourceLoader;
+	}
+
+	public Resource getResource(String location) {
+		return resourceLoader.getResource(location);
+	}
+}
+Contents of Beans.xml are:
+--------------------------------
+
+<?xml version="1.0" encoding="UTF-8"?>
+    <beans xmlns="http://www.springframework.org/schema/beans"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:aop="http://www.springframework.org/schema/aop"
+         xmlns:tx="http://www.springframework.org/schema/tx"
+         xmlns:context="http://www.springframework.org/schema/context"
+         xsi:schemaLocation="
+              http://www.springframework.org/schema/beans
+              http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+              http://www.springframework.org/schema/tx
+              http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+              http://www.springframework.org/schema/aop
+              http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+              http://www.springframework.org/schema/context
+              http://www.springframework.org/schema/context/spring-context-2.5.xsd">
+
+      <bean id="productService" class="com.javabeat.ProductService" >
+      </bean>
+
+    </beans>
+Contents of MainApp.java are:
+
+package com.javabeat;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.core.io.Resource;
+
+public class MainApp {
+	public static void main(String[] args) throws Exception {
+		ApplicationContext ctx = new ClassPathXmlApplicationContext("Beans.xml");
+		ProductService productService = (ProductService) ctx
+				.getBean("productService");
+
+		try {
+			Resource resource = productService
+					.getResource("file:c:\\SampleResourceFile.txt");
+			InputStream is = resource.getInputStream();
+			BufferedReader br = new BufferedReader(new InputStreamReader(is));
+
+			String line;
+			while ((line = br.readLine()) != null) {
+				System.out.println(line);
+			}
+			br.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+}
+We get the resource from the bean productService.
+
+Now execute the code and the following output appears on the console:
+
+**********************************
+HI I'M AN EXTERNAL RESOURCE FILE
+**********************************
+Constructing application contexts
+-----------------------------------
+
+
+ApplicationContext is an interface only. You have to instantiate an implementation of it. 
+An application context constructor (for a specific application context type) generally takes a string or array of 
+strings as the location path(s) of the resource(s) such as XML files that make up the definition of the context. 
+For example:
+
+ApplicationContext ctx = new ClassPathXmlApplicationContext("com/javabeat/beans.xml");
+
+The ClassPathXmlApplicationContext implementation builds an application context by loading an XML
+configuration file from the classpath, when the location path doesn’t have a prefix. 
+Besides ClassPathXmlApplicationContext, several other ApplicationContext implementations are provided by Spring. 
+FileSystemXmlApplicationContext is used to load XML configuration files from the file system or from URLs, 
+while XmlWebApplicationContext and XmlPortletApplicationContext 
+can be used in web and portal applications only.
+
+
+
 
